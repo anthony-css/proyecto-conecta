@@ -1,0 +1,65 @@
+<header class="page-header">
+  <div><h1>Agenda</h1><p>Fechas, cupos y asistencia de las próximas actividades.</p></div>
+  <div class="actions">
+    <button type="button" class="secondary icon-button" aria-label="Actualizar agenda" title="Actualizar agenda"
+      (click)="cargar()" [disabled]="cargando()"><svg lucideRefreshCw aria-hidden="true"></svg></button>
+    <a class="button-link" routerLink="/eventos/nuevo"><svg lucidePlus aria-hidden="true"></svg> Nuevo evento</a>
+  </div>
+</header>
+
+@if (error()) {
+  <div class="notice error">
+    <p role="alert">{{ error() }}</p>
+    <button type="button" class="secondary" (click)="cargar()">Reintentar</button>
+  </div>
+}
+
+@if (cargando() && !resumen()) {
+  <section class="stack" aria-busy="true">
+    <p role="status">Cargando agenda…</p>
+    <div class="panel skeleton" aria-hidden="true"></div>
+    <div class="panel skeleton" aria-hidden="true"></div>
+  </section>
+} @else if (resumen(); as datos) {
+  <dl class="panel indicadores" aria-label="Resumen de la agenda">
+    @for (indicador of indicadores; track indicador.campo) {
+      <div>
+        <dt>{{ indicador.nombre }}</dt>
+        <dd>{{ datos[indicador.campo] }}</dd>
+      </div>
+    }
+  </dl>
+
+  <section class="panel calendario" aria-labelledby="proximos" [attr.aria-busy]="cargando()">
+    <div class="catalog-row">
+      <h2 id="proximos">Próximos eventos</h2>
+      <a class="agenda-link" routerLink="/eventos">Todos los eventos <svg lucideArrowRight aria-hidden="true"></svg></a>
+    </div>
+    @if (proximos().length) {
+      <ol class="catalog-list">
+        @for (evento of proximos(); track evento.id_evento) {
+          <li class="agenda-evento">
+            <time class="event-date" [attr.datetime]="evento.fecha + 'T' + evento.hora_inicio">
+              <strong>{{ evento.fecha.slice(8, 10) }}/{{ evento.fecha.slice(5, 7) }}</strong>
+              <span>{{ evento.hora_inicio.slice(0, 5) }}</span>
+            </time>
+            <div>
+              <span class="badge" [attr.data-state]="evento.estado">{{ estados[evento.estado] }}</span>
+              <h3><a [routerLink]="['/eventos', evento.id_evento, 'editar']">{{ evento.titulo }}</a></h3>
+              <p>{{ evento.categoria.nombre }} · {{ evento.ubicacion }}</p>
+            </div>
+            <div class="ocupacion">
+              <p>{{ evento.inscritos }} de {{ evento.aforo }} cupos ocupados</p>
+              <progress [value]="ocupacion(evento)" max="100" [attr.aria-label]="'Ocupación de ' + evento.titulo"></progress>
+            </div>
+            <a class="agenda-link" routerLink="/asistencia" [queryParams]="{ id_evento: evento.id_evento }">
+              <svg lucideScanLine aria-hidden="true"></svg> Asistencia
+            </a>
+          </li>
+        }
+      </ol>
+    } @else {
+      <p>No hay eventos programados con inicio próximo.</p>
+    }
+  </section>
+}

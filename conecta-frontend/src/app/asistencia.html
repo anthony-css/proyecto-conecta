@@ -1,0 +1,174 @@
+<header class="page-header">
+  <div><h1>Control de asistencia</h1><p>Valida el ingreso de los participantes al evento.</p></div>
+</header>
+
+@if (eligiendo()) {
+  <section class="panel stack selector" aria-labelledby="elegir-evento">
+    <h2 id="elegir-evento">Elige un evento</h2>
+    <label>Buscar por título <input type="search" [formControl]="buscar" placeholder="Título del evento"></label>
+    @if (errorEventos()) { <p class="notice error" role="alert">{{ errorEventos() }}</p> }
+    @if (cargandoEventos()) {
+      <p role="status">Buscando eventos…</p>
+    } @else if (pagina(); as items) {
+      @if (items.content.length) {
+        <ul class="catalog-list">
+          @for (item of items.content; track item.id_evento) {
+            <li class="catalog-row">
+              <div><strong>{{ item.titulo }}</strong><p>{{ fecha(item.fecha) }} · {{ estados[item.estado] }}</p></div>
+              <button type="button" class="secondary" (click)="seleccionar(item)"
+                [attr.aria-label]="'Seleccionar ' + item.titulo">Seleccionar</button>
+            </li>
+          }
+        </ul>
+        <app-paginacion entidad="eventos" [pagina]="items.page" [paginas]="items.total_pages"
+          [total]="items.total_elements" [tamano]="items.size" (cambiar)="cargarEventos($event)" />
+      } @else {
+        <p>No se encontraron eventos.</p>
+      }
+    } @else {
+      <button type="button" class="secondary" (click)="cargarEventos()">Reintentar</button>
+    }
+  </section>
+} @else if (evento(); as item) {
+  <section class="panel catalog-row evento-activo" aria-labelledby="titulo-evento">
+    <div>
+      <p class="control-etiqueta">EVENTO SELECCIONADO</p>
+      <h2 id="titulo-evento">{{ item.titulo }}</h2>
+      <p>{{ fecha(item.fecha) }} · {{ item.hora_inicio.slice(0, 5) }} · {{ item.ubicacion }}</p>
+    </div>
+    <div class="actions">
+      <span class="badge" [attr.data-state]="item.estado">{{ estados[item.estado] }}</span>
+      <a class="event-back" [routerLink]="['/eventos', item.id_evento, 'inscritos']">Inscritos</a>
+      <button type="button" class="secondary" (click)="elegirOtro()" [disabled]="validando()">Cambiar evento</button>
+    </div>
+  </section>
+
+  @if (!habilitado()) {
+    <p class="notice">El estado actual del evento no permite registrar asistencia.</p>
+  } @else {
+    <div class="control-grid">
+      <section class="panel stack metodo" aria-label="Método de validación">
+        <div class="modo-control" role="group" aria-label="Método de validación">
+          <button type="button" class="secondary" [attr.aria-pressed]="modo() === 'qr'" [disabled]="validando()"
+            (click)="cambiarModo('qr')"><svg lucideScanLine aria-hidden="true"></svg> Escanear QR</button>
+          <button type="button" class="secondary" [attr.aria-pressed]="modo() === 'manual'" [disabled]="validando()"
+            (click)="cambiarModo('manual')"><svg lucideKeyboard aria-hidden="true"></svg> Buscar por nombre o código</button>
+        </div>
+
+        @if (modo() === 'qr') {
+          <div class="stack">
+            <h2>Escáner de ingreso</h2>
+            <app-qr-scanner [bloqueado]="validando()" (leido)="validarQr($event)" />
+          </div>
+        } @else {
+          <div class="stack">
+            <div>
+              <h2>Buscar participante</h2>
+            </div>
+            @if (cargandoInscritos()) { <p role="status">Consultando inscripciones…</p> }
+            @if (errorInscritos()) {
+              <p class="notice error" role="alert">{{ errorInscritos() }}</p>
+              <div><button type="button" class="secondary" (click)="recargarInscritos()">Reintentar inscritos</button></div>
+            }
+            <label>Nombre o código de inscripción
+              <input #busqueda type="search" [value]="busquedaInscrito()"
+                (input)="busquedaInscrito.set(busqueda.value)" [readOnly]="validando()">
+            </label>
+            @if (busquedaInscrito().trim() && !cargandoInscritos() && !errorInscritos()) {
+              <ul class="catalog-list">
+                @for (inscripcion of coincidencias(); track inscripcion.id_inscripcion) {
+                  <li class="catalog-row">
+                    <div>
+                      <strong>{{ nombre(inscripcion) }}</strong>
+                      <p>{{ inscripcion.email }}</p>
+                      <p>{{ inscripcion.codigo }}</p>
+                      <span class="badge" [attr.data-state]="inscripcion.estado">
+                        {{ inscripcion.estado === 'CONFIRMADA' ? 'Pendiente' :
+                           inscripcion.estado === 'ASISTIO' ? 'Asistencia registrada' : estadosInscripcion[inscripcion.estado] }}
+                      </span>
+                    </div>
+                    @if (inscripcion.estado === 'CONFIRMADA') {
+                      <button type="button" class="secondary" [disabled]="validando()"
+                        (click)="prepararManual(inscripcion)">Registrar</button>
+                    }
+                  </li>
+                } @empty {
+                  <li role="status">No hay inscritos que coincidan con la búsqueda.</li>
+                }
+              </ul>
+            }
+          </div>
+
+          @if (manual(); as inscripcion) {
+            <app-confirmar [mensaje]="'¿Registrar asistencia de ' + nombre(inscripcion) + '?'"
+              [etiqueta]="validando() ? 'Registrando…' : 'Confirmar asistencia'"
+              [ocupado]="validando()" [invalido]="observacion.invalid"
+              (aceptar)="registrarManual()" (volver)="manual.set(null)">
+              <p>{{ inscripcion.email }} · {{ inscripcion.codigo }}</p>
+              @if (inscripcion.telefono) { <p>{{ inscripcion.telefono }}</p> }
+              <label class="observacion">Observación (opcional)
+                <input [formControl]="observacion" maxlength="255" [readOnly]="validando()">
+              </label>
+            </app-confirmar>
+          }
+        }
+      </section>
+
+      <section class="panel resultado" aria-labelledby="titulo-resultado">
+        <h2 id="titulo-resultado">Resultado de ingreso</h2>
+        @if (validando()) {
+          <p role="status">Validando asistencia…</p>
+        } @else if (error()) {
+          <div class="resultado-estado rechazo" role="alert">
+            <svg lucideCircleAlert aria-hidden="true"></svg>
+            <div><strong>{{ duplicada() ? 'Asistencia duplicada' : 'Ingreso no registrado' }}</strong><p>{{ error() }}</p></div>
+          </div>
+        } @else if (resultado(); as registro) {
+          <div class="resultado-estado exito" role="status">
+            <svg lucideCircleCheck aria-hidden="true"></svg>
+            <div>
+              <strong>Asistencia registrada.</strong>
+              <p>{{ registro.inscripcion.participante }}</p>
+              <p>{{ registro.inscripcion.codigo }} · {{ metodo(registro) }} · {{ fecha(registro.fecha_hora) }}</p>
+            </div>
+          </div>
+        } @else {
+          <p class="resultado-vacio">Esperando la próxima validación.</p>
+        }
+      </section>
+    </div>
+  }
+  <section class="panel historial" aria-labelledby="titulo-historial">
+    <h2 id="titulo-historial">Historial de asistencia</h2>
+    @if (aviso()) { <p class="notice" role="status">{{ aviso() }}</p> }
+    @if (cargandoHistorial()) {
+      <p role="status">Cargando historial…</p>
+    } @else if (errorHistorial()) {
+      <p class="notice error" role="alert">{{ errorHistorial() }}</p>
+      <button type="button" class="secondary" (click)="recargarHistorial()">Reintentar historial</button>
+    } @else {
+      <ol>
+        @for (registro of historial(); track registro.id_asistencia) {
+          <li>
+            <div><strong>{{ registro.inscripcion.participante }}</strong><span>{{ registro.inscripcion.codigo }}</span></div>
+            <div class="actions">
+              <div><span class="badge">{{ metodo(registro) }}</span><time [attr.datetime]="registro.fecha_hora">{{ fecha(registro.fecha_hora) }}</time></div>
+              <button type="button" class="secondary" [disabled]="validando()" (click)="prepararCorreccion(registro)"
+                [attr.aria-label]="'Deshacer asistencia de ' + registro.inscripcion.participante">Deshacer asistencia</button>
+            </div>
+          </li>
+        } @empty {
+          <li>Aún no hay asistencias registradas para este evento.</li>
+        }
+      </ol>
+    }
+  </section>
+
+  @if (correccion(); as registro) {
+    <app-confirmar [mensaje]="'¿Deshacer la asistencia de ' + registro.inscripcion.participante + ' (' + registro.inscripcion.codigo + ')? Volverá a quedar pendiente.'"
+      [etiqueta]="validando() ? 'Deshaciendo…' : 'Deshacer asistencia'" [ocupado]="validando()"
+      (aceptar)="deshacer()" (volver)="correccion.set(null)">
+      @if (errorCorreccion()) { <p class="field-error" role="alert">{{ errorCorreccion() }}</p> }
+    </app-confirmar>
+  }
+}

@@ -1,0 +1,33 @@
+# Publicar únicamente los componentes del proyecto y la documentación raíz.
+/*
+!/.gitignore
+!/README.md
+!/conecta-backend/
+!/conecta-frontend/
+!/conecta-ios/
+!/Base Datos/
+
+/Base Datos/*
+!/Base Datos/bd_conecta_demo.sql
+
+node_modules/
+dist/
+target/
+.angular/
+.vscode/
+.idea/
+*.launch
+*.log
+.DS_Store
+Thumbs.db
+DerivedData/
+xcuserdata/
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.jks
+*firebase-adminsdk*.json
+*service-account*.json
+firebase-admin.json

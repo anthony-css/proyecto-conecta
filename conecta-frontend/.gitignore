@@ -1,0 +1,104 @@
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# ==================== Compiled output ====================
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# ==================== Node Package Manager ====================
+# Node modules
+/node_modules
+npm-debug.log
+npm-error.log
+.npm
+.eslintcache
+
+# ==================== IDEs and editors ====================
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+*.sublime-project
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/mcp.json
+.history/
+*.code-workspace
+
+# ==================== Angular ====================
+/.angular
+/.angular/cache
+.angular/
+/dist/
+/.ng
+
+# ==================== Build output ====================
+/coverage
+/test-results
+/junit.xml
+
+# ==================== Configuration Files (Sensitive) ====================
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.example.local
+
+# ==================== Firebase & Cloud Storage ====================
+# Firebase configuration files
+firebase-config.json
+!firebase-config.example.json
+google-services.json
+!google-services.example.json
+
+# ==================== Application Generated Files ====================
+src/assets/formatos/
+src/assets/uploads/
+src/assets/storage/
+src/assets/documents/
+
+# ==================== Testing & Coverage ====================
+/coverage
+/.nyc_output
+test-results/
+__screenshots__/
+screenshots/
+
+# ==================== Miscellaneous ====================
+/connect.lock
+/libpeerconnection.log
+testem.log
+/typings
+.awcache
+.rpt2_cache/
+*.rar
+
+# ==================== System files ====================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+.AppleDouble
+.LSOverride
+
+# ==================== Editor Temp Files ====================
+*.swp
+*.swo
+*~
+*.orig
+.vim
+
+# ==================== OS ====================
+desktop.ini
+Thumbs.db
+.Thumbs.db

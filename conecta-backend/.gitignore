@@ -1,0 +1,107 @@
+# ==================== Spring Boot & Maven ====================
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+.mvn/wrapper/maven-wrapper.jar
+dependency-reduced-pom.xml
+buildNumber.properties
+.maven.mdesc.xml
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+releases/
+.flattened-pom.xml
+
+# ==================== Configuration Files (Sensitive) ====================
+application.properties
+!/src/main/resources/application.properties
+application-*.properties
+!application-example.properties
+application.yml
+application-*.yml
+!application-example.yml
+.env
+.env.local
+.env.*.local
+
+# ==================== Firebase & Cloud Storage ====================
+# Firebase configuration files
+*firebase-adminsdk*.json
+firebase-config.json
+!firebase-config.example.json
+google-services.json
+!google-services.example.json
+
+# ==================== Uploaded Files & Generated Content ====================
+src/main/resources/static/uploads/
+src/main/resources/static/storage/
+src/main/resources/static/documents/
+uploads/
+storage/
+documents/
+
+# ==================== Logs & Temp Files ====================
+*.log
+backend-run*.log
+*.tmp
+*.pid
+
+# ==================== IDE & Editor ====================
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+.idea_modules/
+
+# Spring Tools Suite
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+sts4-cache/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Eclipse
+.eclipse
+.jsdtscope
+*.pydevproject
+*.perspectivedelta
+
+# ==================== Java ====================
+*.class
+*.jar
+*.war
+*.nar
+*.zip
+*.tar.gz
+*.rar
+*.exe
+hs_err_pid*.log
+.mtj.tmp/
+
+# ==================== System Files ====================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ==================== Editor Temp Files ====================
+*.swp
+*.swo
+*~
+*.orig

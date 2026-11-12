@@ -1,0 +1,46 @@
+:host { display: block; background: var(--con-ink); color: white; min-height: 100dvh; }
+.access-brand { display: grid; gap: clamp(1rem, 5vh, 3rem); }
+.brand-mark {
+  display: grid; place-items: center; width: 2.65rem; height: 2.65rem;
+  background: var(--con-accent); color: var(--con-ink); border-radius: 0.55rem;
+}
+.access-wordmark { font-weight: 700; letter-spacing: 0.16em; }
+.eyebrow { margin: 0; font-weight: 600; font-size: 0.72rem; letter-spacing: 0.11em; text-transform: uppercase; }
+.access-brand .eyebrow { color: var(--con-accent); }
+.brand-title { margin: 0.65rem 0; font-size: clamp(2rem, 4vw, 3.65rem); font-weight: 600; letter-spacing: -0.045em; line-height: 1.08; }
+.brand-description { color: #dedfe2; max-width: 27rem; }
+.ticket {
+  position: relative; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0.65rem;
+  max-width: 23rem; padding: 1.1rem 1.3rem;
+  background: var(--con-accent); color: var(--con-ink); border-radius: 0.75rem;
+}
+.ticket::before, .ticket::after {
+  content: ''; position: absolute; top: 50%; width: 1rem; height: 1rem; translate: 0 -50%;
+  border-radius: 50%; background: var(--con-ink);
+}
+.ticket::before { left: -0.5rem; }
+.ticket::after { right: -0.5rem; }
+.ticket-label { font-weight: 700; line-height: 1.1; letter-spacing: 0.04em; }
+.ticket-mark { border-left: 1px dashed #755719; padding-left: 1rem; }
+.ticket-mark svg { width: 2.25rem; height: 2.25rem; }
+.ticket-code { font-size: 0.66rem; font-weight: 500; letter-spacing: 0.13em; }
+.access-form {
+  color: var(--con-ink); background: var(--con-surface); border-radius: 1rem;
+  padding: clamp(1.3rem, 4vw, 2.65rem); display: grid; gap: 0.75rem;
+}
+.access-form .eyebrow { color: var(--con-primary-strong); }
+.access-form h1 { margin: 0; line-height: 1.12; font-size: clamp(1.65rem, 3vw, 2.25rem); }
+.access-form .intro { margin: 0 0 0.6rem; color: var(--con-muted); }
+.access-form label { font-size: 0.88rem; font-weight: 500; }
+.access-form input { width: 100%; }
+.access-form > button { margin-top: 0.55rem; justify-content: space-between; }
+.password-field { position: relative; }
+.password-field input { padding-inline-end: 3rem; }
+.password-field input::-ms-reveal { display: none; }
+.password-toggle { position: absolute; inset-inline-end: 0.2rem; top: 50%; transform: translateY(-50%); width: 2.5rem; min-height: 2.25rem; padding: 0; border: 0; background: transparent; color: var(--con-muted); }
+.access-form .field-error { margin: 0; }
+@media (max-width: 63.99rem) {
+  .access { max-width: 34rem; }
+  .brand-copy { margin-top: 0.5rem; }
+  .ticket { display: none; }
+}

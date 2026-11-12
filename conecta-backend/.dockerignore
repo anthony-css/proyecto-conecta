@@ -1,0 +1,12 @@
+**
+!pom.xml
+!src/
+!src/**
+**/.env
+**/.env.*
+**/*firebase-adminsdk*.json
+**/*service-account*.json
+**/firebase-admin.json
+**/firebase-config.json
+**/*.key
+**/*.pem

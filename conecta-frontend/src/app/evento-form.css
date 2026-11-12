@@ -1,0 +1,23 @@
+.editor-grid {
+  display: grid;
+  gap: 1rem;
+  align-items: start;
+}
+.image-panel > p { margin: 0; color: var(--con-muted); }
+.image-panel > .field-error { color: var(--con-danger); }
+.image-empty {
+  display: grid;
+  place-items: center;
+  min-height: 9rem;
+  background: var(--con-bg);
+  border: 1px dashed var(--con-border);
+  border-radius: 0.6rem;
+}
+.event-preview {
+  width: 100%;
+  background: var(--con-bg);
+  border-radius: 0.6rem;
+}
+@media (min-width: 64rem) {
+  .editor-grid { grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr); }
+}

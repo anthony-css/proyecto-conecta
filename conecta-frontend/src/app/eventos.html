@@ -1,0 +1,105 @@
+<header class="page-header">
+  <div><h1>Eventos</h1><p>Organiza el calendario y publica actividades para la comunidad.</p></div>
+  <div class="actions">
+    <a class="secondary event-link" routerLink="/categorias"><svg lucideTags aria-hidden="true"></svg> Categorías</a>
+    <a class="button-link" routerLink="/eventos/nuevo"><svg lucidePlus aria-hidden="true"></svg> Nuevo evento</a>
+  </div>
+</header>
+
+<fieldset class="panel fields filters" [formGroup]="filtros" [disabled]="ocupado()">
+  <legend>Filtros de eventos</legend>
+  <label>Buscar <input type="search" formControlName="q" placeholder="Título del evento"></label>
+  <label>Estado
+    <select formControlName="estado">
+      <option value="">Todos</option>
+      @for (estado of estadosLista; track estado[0]) { <option [value]="estado[0]">{{ estado[1] }}</option> }
+    </select>
+  </label>
+  <label>Categoría
+    <select formControlName="id_categoria">
+      <option value="">Todas</option>
+      @for (categoria of categorias(); track categoria.id_categoria) {
+        <option [value]="categoria.id_categoria">{{ categoria.nombre }}</option>
+      }
+    </select>
+  </label>
+  <label>Fecha <input type="date" formControlName="fecha"></label>
+  <div class="actions">
+    <button type="button" class="secondary" (click)="filtros.reset()">Limpiar filtros</button>
+  </div>
+</fieldset>
+
+@if (errorCategorias()) { <p class="notice error" role="alert">{{ errorCategorias() }}</p> }
+@if (error()) { <p class="notice error" role="alert">{{ error() }}</p> }
+<app-toast [mensaje]="aviso()" (cerrar)="aviso.set('')" />
+
+@if (carga() && !pagina()) {
+  <p class="panel" role="status">Cargando eventos…</p>
+} @else if (pagina(); as resultado) {
+  @if (resultado.content.length) {
+    <div class="data-sheet" [attr.aria-busy]="carga()">
+      <div class="data-scroll" role="region" aria-label="Listado de eventos" tabindex="0">
+        <table>
+          <thead><tr>
+            <th scope="col">Evento</th><th scope="col">Fecha</th><th scope="col">Estado</th>
+            <th scope="col">Ocupación</th><th scope="col">Acciones</th>
+          </tr></thead>
+          <tbody>
+            @for (evento of resultado.content; track evento.id_evento) {
+              <tr>
+                <th scope="row">
+                  <a class="event-title" [routerLink]="['/eventos', evento.id_evento, 'editar']">{{ evento.titulo }}</a>
+                  <span class="event-meta">{{ evento.categoria.nombre }} · {{ evento.ubicacion }}</span>
+                  @if (evento.destacado) { <span class="event-highlight">Destacado</span> }
+                </th>
+                <td>
+                  <time class="event-date" [attr.datetime]="evento.fecha + 'T' + evento.hora_inicio">
+                    <strong>{{ evento.fecha.slice(8, 10) }}/{{ evento.fecha.slice(5, 7) }}/{{ evento.fecha.slice(0, 4) }}</strong>
+                    <span>{{ evento.hora_inicio.slice(0, 5) }}</span>
+                  </time>
+                </td>
+                <td><span class="badge" [attr.data-state]="evento.estado">{{ estados[evento.estado] }}</span></td>
+                <td class="whitespace-nowrap">{{ evento.inscritos }} / {{ evento.aforo }}</td>
+                <td>
+                  <button #boton type="button" class="secondary" [attr.popovertarget]="'evento-acciones-' + evento.id_evento"
+                    [attr.aria-label]="'Acciones de ' + evento.titulo" title="Acciones del evento"
+                    (click)="posicionarAcciones(boton, acciones)" [disabled]="ocupado() || carga()">
+                    Acciones <svg lucideChevronDown aria-hidden="true"></svg>
+                  </button>
+                  <div #acciones class="row-actions" popover [id]="'evento-acciones-' + evento.id_evento">
+                    <a autofocus [routerLink]="['/eventos', evento.id_evento, 'editar']" (click)="acciones.hidePopover()">
+                      <svg lucidePencil aria-hidden="true"></svg> {{ editable(evento) ? 'Editar evento' : 'Ver detalle' }}
+                    </a>
+                    <a [routerLink]="['/eventos', evento.id_evento, 'inscritos']" (click)="acciones.hidePopover()"><svg lucideUsers aria-hidden="true"></svg> Ver inscritos</a>
+                    @if (evento.estado === 'BORRADOR') {
+                      <button type="button" class="secondary" (click)="desdeMenu(evento, 'publicar', acciones, boton)"><svg lucideSend aria-hidden="true"></svg> Publicar</button>
+                    }
+                    @if (publicado(evento)) {
+                      <button type="button" class="secondary" (click)="desdeMenu(evento, 'cancelar', acciones, boton)"><svg lucideCircleX aria-hidden="true"></svg> Cancelar evento</button>
+                    }
+                    @if (puedeCerrar(evento)) {
+                      <button type="button" class="secondary" (click)="desdeMenu(evento, 'realizar', acciones, boton)"><svg lucideCircleCheck aria-hidden="true"></svg> Marcar como realizado</button>
+                    }
+                    @if (evento.estado !== 'INACTIVO') {
+                      <button type="button" class="secondary row-danger" (click)="desdeMenu(evento, 'eliminar', acciones, boton)"><svg lucideArchive aria-hidden="true"></svg> Dar de baja</button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <app-paginacion entidad="eventos" [pagina]="resultado.page" [paginas]="resultado.total_pages"
+        [total]="resultado.total_elements" [tamano]="resultado.size" [ocupado]="ocupado() || carga()" (cambiar)="cargar($event)" />
+    </div>
+  } @else {
+    <p class="panel">No hay eventos que coincidan con los filtros.</p>
+  }
+} @else if (error()) {
+  <button type="button" (click)="cargar()">Reintentar</button>
+}
+
+@if (confirmacion(); as cambio) {
+  <app-confirmar [mensaje]="cambio.mensaje" (aceptar)="confirmar()" (volver)="confirmacion.set(null)" />
+}

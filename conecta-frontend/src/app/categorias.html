@@ -1,0 +1,74 @@
+<header class="page-header">
+  <div>
+    <a class="event-back" routerLink="/eventos"><svg lucideArrowLeft aria-hidden="true"></svg> Eventos</a>
+    <h1>Categorías</h1>
+    <p>Organiza las actividades del catálogo de CONECTA.</p>
+  </div>
+  <button type="button" (click)="abrir()" [disabled]="ocupado()">
+    <svg lucidePlus aria-hidden="true"></svg> Nueva categoría
+  </button>
+</header>
+
+<app-toast [mensaje]="aviso()" (cerrar)="aviso.set('')" />
+@if (error() && !abierta()) { <p class="notice error" role="alert">{{ error() }}</p> }
+@if (baja(); as categoria) {
+  <app-confirmar [mensaje]="'¿Dar de baja «' + categoria.nombre + '»? Si tiene eventos, quedará inactiva.'"
+    (aceptar)="eliminar()" (volver)="baja.set(null)" />
+}
+
+@if (abierta()) {
+  <form class="panel stack mb-4" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+    <h2 class="m-0">{{ edicion() ? 'Editar categoría' : 'Nueva categoría' }}</h2>
+    @if (error()) { <p class="notice error" role="alert">{{ error() }}</p> }
+    <fieldset [disabled]="ocupado()" class="fields border-0 p-0">
+      <label class="wide">Nombre
+        <input #nombreInput formControlName="nombre" required maxlength="60">
+      </label>
+      <label class="wide">Descripción (opcional)
+        <textarea formControlName="descripcion" maxlength="200" rows="2"></textarea>
+      </label>
+      <label class="check"><input type="checkbox" formControlName="activo"> Activa</label>
+    </fieldset>
+    <div class="actions">
+      <button type="submit" [disabled]="ocupado()">{{ ocupado() ? 'Guardando…' : 'Guardar categoría' }}</button>
+      <button type="button" class="secondary" [disabled]="ocupado()" (click)="abierta.set(false)">Cancelar</button>
+    </div>
+  </form>
+}
+
+@if (carga()) {
+  <p class="panel" role="status">Cargando categorías…</p>
+} @else if (categorias().length) {
+  <div class="data-sheet">
+    <div class="data-scroll" role="region" aria-label="Listado de categorías" tabindex="0">
+      <table>
+        <thead><tr><th scope="col">Nombre</th><th scope="col">Descripción</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
+        <tbody>
+          @for (categoria of categorias(); track categoria.id_categoria) {
+            <tr>
+              <th scope="row">{{ categoria.nombre }}</th>
+              <td>{{ categoria.descripcion || '—' }}</td>
+              <td><span class="badge" [attr.data-state]="categoria.activo ? 'PUBLICADO' : 'INACTIVO'">
+                {{ categoria.activo ? 'Activa' : 'Inactiva' }}
+              </span></td>
+              <td>
+                <div class="actions">
+                  <button type="button" class="secondary icon-button" (click)="abrir(categoria)" [disabled]="ocupado()"
+                    [attr.aria-label]="'Editar ' + categoria.nombre" title="Editar"><svg lucidePencil aria-hidden="true"></svg></button>
+                  @if (categoria.activo) {
+                    <button type="button" class="danger icon-button" title="Dar de baja" (click)="prepararBaja(categoria)" [disabled]="ocupado()"
+                      [attr.aria-label]="'Dar de baja ' + categoria.nombre"><svg lucideArchive aria-hidden="true"></svg></button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+} @else if (error() && !abierta()) {
+  <button type="button" (click)="cargar()">Reintentar</button>
+} @else {
+  <p class="panel">Todavía no hay categorías.</p>
+}

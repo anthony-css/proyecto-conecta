@@ -1,0 +1,144 @@
+<header class="page-header">
+  <div><h1>Reportes</h1><p>Consulta la asistencia y descarga el reporte de cada evento.</p></div>
+</header>
+
+<div class="report-grid">
+  <section class="panel stack report-main" aria-labelledby="reporte">
+    @if (seleccionado(); as evento) {
+      <header class="report-header">
+        <div>
+          <p class="report-eyebrow">REPORTE DE ASISTENCIA</p>
+          <h2 id="reporte">{{ evento.titulo }}</h2>
+          <p>{{ fecha(evento.fecha) }} · {{ evento.ubicacion }}</p>
+          <span class="badge" [attr.data-state]="evento.estado">{{ estados[evento.estado] }}</span>
+        </div>
+        <div class="actions">
+          <button type="button" (click)="descargar()" [disabled]="descargando() || cargandoResumen() || !resumen()?.total">
+            <svg lucideDownload aria-hidden="true"></svg>
+            {{ descargando() ? 'Preparando PDF…' : 'Descargar PDF' }}
+          </button>
+          <button type="button" class="secondary" (click)="descargarCsv()" [disabled]="cargandoResumen() || !resumen()?.total">
+            <svg lucideDownload aria-hidden="true"></svg> Descargar CSV
+          </button>
+        </div>
+      </header>
+      <a class="event-back" [routerLink]="['/eventos', evento.id_evento, 'inscritos']">
+        <svg lucideUsers aria-hidden="true"></svg> Ver inscritos
+      </a>
+
+      @if (cargandoResumen()) {
+        <p class="notice" role="status">Consultando inscripciones…</p>
+      } @else if (errorResumen()) {
+        <div class="notice error">
+          <p role="alert">{{ errorResumen() }}</p>
+          <button type="button" class="secondary" (click)="cargarResumen()">Reintentar resumen</button>
+        </div>
+      } @else if (resumen(); as datos) {
+        @if (evento.estado === 'CANCELADO' && datos.total) {
+          <p class="notice">Evento cancelado. Puedes consultar y descargar el historial de inscripciones.</p>
+        }
+        @if (evento.estado !== 'CANCELADO' || datos.total) {
+          <dl class="report-kpis">
+            @if (evento.estado !== 'CANCELADO') {
+              <div><dt>Asistencia</dt><dd>
+                @if (evento.estado === 'REALIZADO') {
+                  {{ datos.tasaAsistencia === null ? '—' : datos.tasaAsistencia + '%' }}
+                } @else { Pendiente }
+              </dd></div>
+              <div><dt>Ocupación</dt><dd>{{ datos.activas }} / {{ evento.aforo }}</dd></div>
+              <div><dt>{{ evento.estado === 'REALIZADO' ? 'Cupos sin ocupar al cierre' : 'Cupos libres' }}</dt>
+                <dd>{{ datos.activas >= evento.aforo ? 0 : evento.aforo - datos.activas }}</dd></div>
+            }
+            <div><dt>Canceladas</dt><dd>{{ datos.tasaCanceladas === null ? '—' : datos.tasaCanceladas + '%' }}</dd></div>
+          </dl>
+        }
+        @if (datos.total) {
+          <figure class="report-chart" aria-labelledby="titulo-grafico">
+            <figcaption id="titulo-grafico">
+              <strong>Inscripciones por estado</strong>
+              <span>{{ datos.total }} en total</span>
+            </figcaption>
+            <div class="chart-layout">
+              <div class="chart-donut" [style.background-image]="datos.dona" aria-hidden="true">
+                <div>
+                  @if (detalleGrafico(); as detalle) {
+                    <strong>{{ detalle.porcentaje }}%</strong><span>{{ detalle.etiqueta }}</span>
+                  } @else {
+                    <strong>{{ datos.total }}</strong><span>Inscripciones</span>
+                  }
+                </div>
+              </div>
+              <ul>
+                @for (fila of datos.filas; track fila.estado) {
+                  <li>
+                    <button type="button" class="secondary chart-label" [attr.aria-pressed]="estadoGrafico() === fila.estado"
+                      (click)="estadoGrafico.set(estadoGrafico() === fila.estado ? null : fila.estado)">
+                      <span class="chart-key" [style.background-color]="fila.color" aria-hidden="true"></span>
+                      <span>{{ fila.etiqueta }}</span><strong>{{ fila.cantidad }}</strong>
+                      <small>{{ fila.porcentaje }}%</small>
+                    </button>
+                  </li>
+                }
+              </ul>
+            </div>
+          </figure>
+          <figure class="report-chart" aria-labelledby="titulo-altas">
+            <figcaption id="titulo-altas"><strong>Inscripciones recibidas por día</strong><span>7 días previos al evento</span></figcaption>
+            <ul class="chart-days">
+              @for (dia of inscripcionesPorDia(); track dia.fecha) {
+                <li>
+                  <strong>{{ dia.cantidad }}</strong>
+                  <div class="chart-day-track" aria-hidden="true"><span [style.height.%]="dia.altura"></span></div>
+                  <time [attr.datetime]="dia.fecha">{{ fecha(dia.fecha).slice(0, 5) }}</time>
+                </li>
+              }
+            </ul>
+          </figure>
+        } @else {
+          <p class="notice">{{ evento.estado === 'CANCELADO' ? 'Este evento se canceló sin inscripciones.' : 'Este evento todavía no tiene inscripciones.' }}</p>
+        }
+      }
+    } @else {
+      <div class="report-empty">
+        <span><svg lucideChartNoAxesColumnIncreasing aria-hidden="true"></svg></span>
+        <h2 id="reporte">Reporte de asistencia</h2>
+        <p>Selecciona un evento para ver las cifras y descargar su PDF.</p>
+      </div>
+    }
+    @if (error()) { <p class="notice error" role="alert">{{ error() }}</p> }
+  </section>
+
+  <section class="panel stack report-picker" aria-labelledby="eventos-reporte">
+    <h2 id="eventos-reporte">Seleccionar evento</h2>
+    <label>Buscar por título <input type="search" [formControl]="buscar" placeholder="Título del evento"></label>
+    @if (errorEventos()) {
+      <p class="notice error" role="alert">{{ errorEventos() }}</p>
+      <div><button type="button" class="secondary" (click)="cargar()">Reintentar</button></div>
+    }
+    @if (cargando()) {
+      <p role="status">Buscando eventos…</p>
+    } @else if (pagina(); as items) {
+      @if (items.content.length) {
+        <ul class="report-events">
+          @for (evento of items.content; track evento.id_evento) {
+            <li>
+              <button type="button" class="secondary report-option" (click)="elegir(evento)"
+                [attr.aria-pressed]="seleccionado()?.id_evento === evento.id_evento" [disabled]="descargando()">
+                <span><strong>{{ evento.titulo }}</strong><small>{{ fecha(evento.fecha) }} · {{ estados[evento.estado] }}</small></span>
+                <svg lucideChevronRight aria-hidden="true"></svg>
+              </button>
+            </li>
+          }
+        </ul>
+        @if (items.total_pages > 1) {
+          <app-paginacion entidad="eventos" [pagina]="items.page" [paginas]="items.total_pages"
+            [total]="items.total_elements" [tamano]="items.size" (cambiar)="cargar($event)" />
+        }
+      } @else {
+        <p>No hay eventos que coincidan con la búsqueda.</p>
+      }
+    }
+  </section>
+</div>
+
+<app-toast [mensaje]="aviso()" (cerrar)="aviso.set('')" />

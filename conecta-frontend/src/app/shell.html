@@ -1,0 +1,62 @@
+<a class="skip-link" href="#contenido" (click)="$event.preventDefault(); contenido.focus()">Saltar al contenido</a>
+<header class="shell-header">
+  <div class="shell-bar">
+    <a class="shell-brand" routerLink="/dashboard" aria-label="Conecta, Agenda">
+      <span class="brand-mark"><svg lucideTicket aria-hidden="true"></svg></span>
+      CONECTA
+    </a>
+    <nav class="shell-nav hidden min-[56rem]:flex" aria-label="Navegación administrativa">
+      @for (section of sections; track section.path) {
+        <a [routerLink]="['/', section.path]" routerLinkActive="active"
+          [class.context-active]="section.path === 'eventos' && enCategorias()" ariaCurrentWhenActive="page">
+          <svg [lucideIcon]="icons[section.path]" aria-hidden="true"></svg>{{ section.label }}
+        </a>
+      }
+    </nav>
+    <div class="hidden items-center gap-3 min-[56rem]:flex">
+      <span class="shell-account"><svg lucideUserRound aria-hidden="true"></svg>{{ admin()?.nombres }} {{ admin()?.apellidos }}</span>
+      <button class="shell-control" type="button" aria-label="Cerrar sesión" title="Cerrar sesión" (click)="confirmarSalida.set(true)">
+        <svg lucideLogOut aria-hidden="true"></svg>
+      </button>
+    </div>
+    <button class="shell-control mobile-toggle" type="button" aria-label="Abrir menú" aria-controls="menu-movil"
+      aria-haspopup="dialog" [attr.aria-expanded]="menuAbierto()" (click)="abrirMenu(menu)">
+      <svg lucideMenu aria-hidden="true"></svg>
+    </button>
+  </div>
+</header>
+
+<dialog #menu id="menu-movil" class="shell-drawer" aria-labelledby="menu-titulo"
+  (close)="menuAbierto.set(false)" (click)="$event.target === menu && menu.close()">
+  <div class="drawer-content">
+    <div class="flex items-center justify-between gap-4">
+      <h2 id="menu-titulo">Menú</h2>
+      <button type="button" class="secondary icon-button" aria-label="Cerrar menú" autofocus (click)="menu.close()">
+        <svg lucideX aria-hidden="true"></svg>
+      </button>
+    </div>
+    <nav class="drawer-nav" aria-label="Navegación móvil">
+      @for (section of sections; track section.path) {
+        <a [routerLink]="['/', section.path]" routerLinkActive="active"
+          [class.context-active]="section.path === 'eventos' && enCategorias()" ariaCurrentWhenActive="page" (click)="menu.close()">
+          <svg [lucideIcon]="icons[section.path]" aria-hidden="true"></svg>{{ section.label }}
+        </a>
+      }
+    </nav>
+    <div class="drawer-account">
+      <span class="shell-account"><svg lucideUserRound aria-hidden="true"></svg>{{ admin()?.nombres }} {{ admin()?.apellidos }}</span>
+      <button type="button" class="secondary" (click)="menu.close(); confirmarSalida.set(true)">
+        <svg lucideLogOut aria-hidden="true"></svg> Cerrar sesión
+      </button>
+    </div>
+  </div>
+</dialog>
+
+@if (confirmarSalida()) {
+  <app-confirmar mensaje="¿Quieres cerrar la sesión del portal?" etiqueta="Cerrar sesión"
+    (aceptar)="logout()" (volver)="confirmarSalida.set(false)" />
+}
+
+<main #contenido id="contenido" class="shell-main" tabindex="-1">
+  <router-outlet />
+</main>

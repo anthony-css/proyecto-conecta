@@ -1,0 +1,130 @@
+@if (evento(); as item) {
+  <app-ficha-evento [evento]="item" vista="inscritos" />
+} @else {
+  <header class="page-header">
+    <div><a class="event-back" routerLink="/eventos">Eventos</a><h1>Inscritos</h1></div>
+  </header>
+}
+
+@if (errorCarga()) {
+  <p class="notice error" role="alert">{{ errorCarga() }}</p>
+  <button type="button" class="secondary" (click)="cargar()">Reintentar</button>
+}
+
+@if (error() && !seleccion() && !cancelacion()) { <p class="notice error" role="alert">{{ error() }}</p> }
+@if (aviso()) { <p class="notice" role="status">{{ aviso() }}</p> }
+@if (resultado(); as asistencia) {
+  <p class="notice" role="status">
+    <strong>Asistencia registrada.</strong>
+    {{ asistencia.inscripcion.participante }} · {{ asistencia.inscripcion.codigo }} · {{ fecha(asistencia.fecha_hora) }}
+  </p>
+}
+
+@if (carga()) {
+  <p role="status">Cargando inscritos…</p>
+} @else if (evento()) {
+  <div class="catalog-row">
+    <h2>Inscripciones</h2>
+    <div class="actions">
+      @if (admiteAsistencia()) {
+        <a class="event-back" routerLink="/asistencia" [queryParams]="{ id_evento: evento()?.id_evento }">
+          <svg lucideScanLine aria-hidden="true"></svg> Control de asistencia
+        </a>
+      }
+      @if (totales().total > 0) {
+        <a class="event-back" routerLink="/reportes" [queryParams]="{ id_evento: evento()?.id_evento }">Reporte PDF</a>
+      }
+    </div>
+  </div>
+  <dl class="panel totales" aria-label="Resumen de inscripciones">
+    <div><dt>Total</dt><dd>{{ totales().total }}</dd></div>
+    @for (opcion of opciones; track opcion) {
+      <div><dt>{{ estados[opcion] }}</dt><dd>{{ totales().porEstado[opcion] }}</dd></div>
+    }
+  </dl>
+
+  <fieldset class="panel fields">
+    <legend>Consultar inscritos</legend>
+    <label>Nombre, correo o código
+      <input #busqueda type="search" [value]="filtroBusqueda()" (input)="filtroBusqueda.set(busqueda.value)">
+    </label>
+    <label>Estado
+      <select #estado [value]="filtroEstado()" (change)="cambiarFiltroEstado(estado.value)">
+        <option value="">Todos</option>
+        @for (opcion of opciones; track opcion) {
+          <option [value]="opcion">{{ estados[opcion] }}</option>
+        }
+      </select>
+    </label>
+    <div class="actions">
+      <button type="button" class="secondary" (click)="exportar()" [disabled]="!visibles().length"><svg lucideDownload aria-hidden="true"></svg> Exportar CSV</button>
+    </div>
+  </fieldset>
+
+  @if (!admiteAsistencia()) {
+    <p class="notice">El estado actual del evento no permite registrar asistencia.</p>
+  }
+
+  @if (seleccion(); as item) {
+    <app-confirmar [mensaje]="'Registrar asistencia de ' + item.codigo"
+      [etiqueta]="guardando() ? 'Registrando…' : 'Confirmar asistencia'"
+      [ocupado]="guardando()" [invalido]="observacion.invalid"
+      (aceptar)="registrar()" (volver)="seleccion.set(null)">
+      <label class="manual-observacion">
+        Observación (opcional)
+        <input [formControl]="observacion" maxlength="255" [readOnly]="guardando()">
+      </label>
+      @if (error()) { <p class="field-error" role="alert">{{ error() }}</p> }
+    </app-confirmar>
+  }
+
+  @if (cancelacion(); as item) {
+    <app-confirmar [mensaje]="'¿Cancelar la inscripción de ' + nombre(item) + ' (' + item.codigo + ')? Se liberará un cupo.'"
+      [etiqueta]="guardando() ? 'Cancelando…' : 'Cancelar inscripción'"
+      [ocupado]="guardando()" (aceptar)="cancelarInscripcion()" (volver)="cancelacion.set(null)">
+      @if (error()) { <p class="field-error" role="alert">{{ error() }}</p> }
+    </app-confirmar>
+  }
+
+  @if (visibles().length) {
+    <div class="data-sheet"><div class="data-scroll tabla" role="region" aria-label="Listado de inscritos" tabindex="0">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Participante</th><th scope="col">Correo</th><th scope="col">Teléfono</th>
+            <th scope="col">Código</th><th scope="col">Estado</th>
+            <th scope="col">Inscripción</th><th scope="col">Asistencia</th><th scope="col">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of visibles(); track item.id_inscripcion) {
+            <tr>
+              <th scope="row">{{ nombre(item) }}</th>
+              <td>{{ item.email }}</td>
+              <td>{{ item.telefono || '—' }}</td>
+              <td>{{ item.codigo }}</td>
+              <td><span class="badge" [attr.data-state]="item.estado">{{ estados[item.estado] }}</span></td>
+              <td>{{ fecha(item.fecha_inscripcion) }}</td>
+              <td>{{ fecha(item.fecha_asistencia) }}</td>
+              <td>
+                <div class="actions">
+                  <button type="button" class="secondary icon-button" title="Copiar código" (click)="copiar(item.codigo)" [attr.aria-label]="'Copiar código ' + item.codigo"><svg lucideCopy aria-hidden="true"></svg></button>
+                  @if (admiteAsistencia() && item.estado === 'CONFIRMADA') {
+                    <button type="button" class="secondary icon-button" title="Registrar asistencia" (click)="preparar(item)" [disabled]="guardando()"
+                      [attr.aria-label]="'Registrar asistencia de ' + item.codigo"><svg lucideUserCheck aria-hidden="true"></svg></button>
+                  }
+                  @if (puedeCancelar(item)) {
+                    <button type="button" class="danger icon-button" title="Cancelar inscripción" (click)="prepararCancelacion(item)" [disabled]="guardando()"
+                      [attr.aria-label]="'Cancelar inscripción de ' + nombre(item)"><svg lucideUserX aria-hidden="true"></svg></button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div></div>
+  } @else {
+    <p class="panel">{{ totales().total ? 'Ninguna inscripción coincide con los filtros.' : 'Este evento todavía no tiene inscritos.' }}</p>
+  }
+}

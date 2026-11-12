@@ -1,0 +1,96 @@
+@if (evento(); as item) {
+  <app-ficha-evento [evento]="item" vista="informacion" />
+} @else {
+  <header class="page-header">
+    <div>
+      <a class="event-back" routerLink="/eventos"><svg lucideArrowLeft aria-hidden="true"></svg> Eventos</a>
+      <h1>{{ id === null ? 'Nuevo evento' : 'Información del evento' }}</h1>
+      @if (id === null) { <p>El nuevo evento se guarda como borrador.</p> }
+    </div>
+  </header>
+}
+
+@if (error()) { <p class="notice error" role="alert">{{ error() }}</p> }
+@if (conflicto()) {
+  <button type="button" class="secondary" (click)="cargar()">Descartar cambios y recargar</button>
+}
+@if (carga()) {
+  <p role="status">Cargando evento y categorías…</p>
+} @else if (listo()) {
+  @if (!categorias().length && !lectura()) {
+    <div class="notice catalog-row">
+      <span>Activa o crea una categoría para poder guardar.</span>
+      <a class="event-back" routerLink="/categorias">Gestionar categorías</a>
+    </div>
+  }
+  <form class="stack" [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+    <div class="editor-grid">
+      <div class="stack">
+    <fieldset class="panel fields" [disabled]="guardando() || lectura()">
+      <legend>Información general</legend>
+      <label>Título <input formControlName="titulo" maxlength="120" required></label>
+      <label>Categoría
+        <select formControlName="id_categoria" required>
+          <option value="">Selecciona una categoría activa</option>
+          @for (categoria of categorias(); track categoria.id_categoria) {
+            <option [value]="categoria.id_categoria">{{ categoria.nombre }}</option>
+          }
+          @if (evento(); as item) {
+            @if (categoriaActualInactiva(item.categoria.id_categoria)) {
+              <option [value]="item.categoria.id_categoria" disabled>{{ item.categoria.nombre }} (inactiva)</option>
+            }
+          }
+        </select>
+      </label>
+      <label class="wide">Descripción <textarea formControlName="descripcion" rows="4" required></textarea></label>
+      <label>Aforo <input type="number" formControlName="aforo" min="1" step="1" required></label>
+      <label class="check"><input type="checkbox" formControlName="destacado"> Mostrar como destacado</label>
+    </fieldset>
+
+    <fieldset class="panel fields" [disabled]="guardando() || lectura()">
+      <legend>Fecha y lugar</legend>
+      <label>Fecha <input type="date" formControlName="fecha" required></label>
+      <label>Hora de inicio <input type="time" formControlName="hora_inicio" step="1" required></label>
+      <label>Hora de fin <input type="time" formControlName="hora_fin" step="1" required></label>
+      @if (form.hasError('horario')) { <p class="wide field-error">La hora de fin debe ser posterior a la de inicio.</p> }
+      <label>Ubicación <input formControlName="ubicacion" maxlength="150" required></label>
+      <label>Dirección (opcional) <input formControlName="direccion" maxlength="200"></label>
+    </fieldset>
+
+      </div>
+    <fieldset class="panel stack image-panel" [disabled]="guardando() || lectura()">
+      <legend>Imagen del evento</legend>
+      <label>URL de imagen (opcional)
+        <input type="url" formControlName="imagen_url" maxlength="255" placeholder="https://…">
+      </label>
+      @if (form.controls.imagen_url.invalid) {
+        <p class="field-error">Ingresa una URL HTTP o HTTPS válida de hasta 255 caracteres.</p>
+      }
+      @if (imagenMostrada(); as url) {
+        @if (imagenRota() === url) {
+          <p role="status">La imagen no está disponible en esta dirección.</p>
+        } @else {
+          <img class="event-preview" [src]="url" alt="Vista previa de la imagen del evento"
+            referrerpolicy="no-referrer" (error)="imagenRota.set(url)">
+        }
+        @if (!lectura()) {
+          <button type="button" class="secondary" (click)="form.controls.imagen_url.setValue(''); imagenRota.set('')">Quitar imagen</button>
+        }
+      } @else if (!form.controls.imagen_url.invalid) {
+        <div class="image-empty">Sin imagen de portada</div>
+      }
+    </fieldset>
+    </div>
+
+    @if (!lectura()) {
+      <div class="actions">
+        <button type="submit" [disabled]="guardando() || conflicto() || !categorias().length">
+          {{ guardando() ? 'Guardando…' : id === null ? 'Crear borrador' : 'Guardar cambios' }}
+        </button>
+        <a class="event-back" routerLink="/eventos">Cancelar</a>
+      </div>
+    }
+  </form>
+} @else if (error() && (id === null || id > 0)) {
+  <button type="button" (click)="cargar()">Reintentar</button>
+}
